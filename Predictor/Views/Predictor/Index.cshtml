@@ -1,0 +1,185 @@
+﻿@using System.Globalization
+@using Application.Dtos
+@{
+    ViewData["Title"] = "Análisis Predictivo de Activos";
+
+    decimal[] valoresOrdenados = new decimal[] {
+        105.00m, 115.00m, 118.00m, 125.00m, 128.00m,
+        131.00m, 135.00m, 138.00m, 140.00m, 143.00m,
+        150.00m, 153.00m, 158.00m, 165.00m, 175.00m,
+        180.00m, 185.00m, 190.00m, 200.00m, 205.00m
+    };
+}
+
+<div class="container py-5">
+    <header class="text-center mb-5">
+        <h1 class="display-4 fw-black text-dark">Predictor <span class="text-primary">Pro</span></h1>
+        <p class="lead text-muted">Inteligencia algorítmica aplicada al análisis de tendencias de activos.</p>
+    </header>
+
+    @if (ViewBag.ResultadoDetallado != null)
+    {
+        var res = (ModosListDtos)ViewBag.ResultadoDetallado;
+        var esAlcista = res.Tendencia.ToLower() == "alcista";
+
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-10">
+                <div class="card border-0 shadow-lg overflow-hidden animate__animated animate__fadeInUp" style="border-radius: 20px;">
+                    <div class="row g-0">
+
+                        
+                        <div class="col-md-5 bg-light p-4 border-end">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="icon-shape bg-white shadow-sm rounded-circle p-2 me-3">
+                                    <i class="bi bi-activity text-primary fs-4"></i>
+                                </div>
+                                <h5 class="mb-0 fw-bold">Análisis Técnico</h5>
+                            </div>
+
+                            
+                            <div class="mb-3">
+                                @if (res.Detalles != null)
+                                {
+                                    @foreach (var detalle in res.Detalles)
+                                    {
+                                        <div class="d-flex justify-content-between py-2 border-bottom border-2 border-white">
+                                            <span class="text-muted fw-medium small">@detalle.Key</span>
+                                            <span class="text-dark fw-bold small">@detalle.Value</span>
+                                        </div>
+                                    }
+                                }
+                            </div>
+
+                            @* Tabla de Cálculos Detallada con Scroll *@
+                            <label class="small text-uppercase fw-bold text-muted mb-2">Desglose de Datos</label>
+                            <div class="table-responsive rounded-3 shadow-sm bg-white mb-3" style="max-height: 200px; overflow-y: auto; scrollbar-width: thin;">
+                                <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.8rem;">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th class="ps-2">Índice</th>
+                                            <th class="text-center">Precio</th>
+                                            <th class="text-end pe-2">@(res.Modo.Contains("ROC") ? "ROC %" : "Val.")</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var fila in res.TablaResultados)
+                                        {
+                                            <tr>
+                                                <td class="ps-2 text-muted">@fila.Indice</td>
+                                                <td class="fw-bold text-center">$@fila.Precio.ToString("N2")</td>
+                                                <td class="text-end pe-2">
+                                                    <span class="fw-bold @(fila.ValorCalculado.Contains("-") ? "text-danger" : "text-success")">
+                                                        @fila.ValorCalculado
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="mt-2">
+                                <label class="small text-uppercase fw-black text-muted mb-1 d-block">Tendencia</label>
+                                <span class="badge @(esAlcista ? "bg-success" : "bg-danger") px-3 py-2 rounded-pill shadow-sm">
+                                    @res.Tendencia.ToUpper() @(esAlcista ? "↑" : "↓")
+                                </span>
+                            </div>
+                        </div>
+
+                        
+                        <div class="col-md-7 p-5 d-flex flex-column justify-content-center align-items-center bg-white position-relative">
+                            <div class="position-absolute top-0 end-0 p-3">
+                                <span class="badge bg-light text-muted border">@res.Modo</span>
+                            </div>
+                            <h6 class="text-primary fw-black text-uppercase tracking-widest mb-2">Precio Proyectado</h6>
+                            <div class="display-1 fw-black text-dark mb-0">
+                                <span class="fs-2 fw-light text-muted">$</span>@res.ValorPredicho.ToString("N2")
+                            </div>
+                            <p class="text-muted mt-3">
+                                <i class="bi bi-clock-history me-1"></i> Análisis de @res.TablaResultados.Count periodos.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <form asp-controller="Predictor" asp-action="CalcularPrediccion" method="post">
+                <div class="card border-0 shadow-sm" style="border-radius: 15px;">
+                    <div class="card-header bg-dark text-white p-4 border-0 d-flex justify-content-between align-items-center" style="border-radius: 15px 15px 0 0;">
+                        <div>
+                            <h5 class="mb-0 fw-bold"><i class="bi bi-database-fill-gear me-2"></i>Dataset Histórico</h5>
+                            <small class="text-white-50">Ingrese los valores de cierre del activo</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg px-4 fw-bold shadow">
+                            CALCULAR <i class="bi bi-chevron-right ms-2"></i>
+                        </button>
+                    </div>
+
+                    <div class="card-body p-4 bg-white" style="max-height: 500px; overflow-y: auto; scrollbar-width: thin;">
+                        <div class="row row-cols-1 row-cols-md-2 g-4">
+                            @for (int i = 0; i < 20; i++)
+                            {
+                                <div class="col">
+                                    <div class="p-3 border rounded-4 bg-light shadow-sm-hover transition-all">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="badge bg-primary rounded-circle">@(i + 1)</span>
+                                            <input type="date" name="fechas" class="form-control form-control-sm border-0 bg-transparent fw-bold text-muted w-auto"
+                                                   value="@DateTime.Now.AddDays(-(19 - i)).ToString("yyyy-MM-dd")" required />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text border-0 bg-white text-success fw-bold">$</span>
+                                            <input type="number" name="valores" class="form-control border-0 bg-white fw-bold fs-5"
+                                                   step="any" value="@valoresOrdenados[i].ToString("0.00", CultureInfo.InvariantCulture)" required />
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .fw-black {
+        font-weight: 900;
+    }
+
+    .tracking-widest {
+        letter-spacing: 0.2em;
+    }
+
+    .shadow-sm-hover:hover {
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+        transform: translateY(-2px);
+    }
+
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+
+    .icon-shape {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    
+    .table-responsive::-webkit-scrollbar, .card-body::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb, .card-body::-webkit-scrollbar-thumb {
+        background: #dee2e6;
+        border-radius: 10px;
+    }
+</style>
